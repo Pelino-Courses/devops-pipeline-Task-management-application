@@ -1,16 +1,22 @@
 ---
-name: ✨ Feature Request
+name: Feature Request
 about: Suggest a new feature or improvement
+title: '[FEATURE] '
 labels: enhancement
+assignees: ''
 ---
 
-## 💡 Feature Description
-Explain the new feature.
+## Feature Description
+Clear description of the proposed feature.
 
-## 🎯 Why is this needed?
-Business/technical reason.
+## Problem It Solves
+What problem does this address?
 
-## 🛠 Proposed Solution
-How should it work?
+## Proposed Solution
+How should this be implemented?
 
-## 📌 Additional Notes
+## Alternatives Considered
+Other approaches you've considered.
+
+## DevOps Impact
+How will this affect the pipeline or infrastructure?
