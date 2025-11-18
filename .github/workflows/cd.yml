@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
@@ -25,16 +25,16 @@ jobs:
 
       - name: Build Backend Image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner,, }}/task-backend:latest backend/
+          docker build -t ghcr.io/${{ toLower(github.repository_owner) }}/task-backend:latest backend/
 
       - name: Build Frontend Image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner,, }}/task-frontend:latest frontend/
+          docker build -t ghcr.io/${{ toLower(github.repository_owner) }}/task-frontend:latest frontend/
 
       - name: Push Backend Image
         run: |
-          docker push ghcr.io/${{ github.repository_owner,, }}/task-backend:latest
+          docker push ghcr.io/${{ toLower(github.repository_owner) }}/task-backend:latest
 
       - name: Push Frontend Image
         run: |
-          docker push ghcr.io/${{ github.repository_owner,, }}/task-frontend:latest
+          docker push ghcr.io/${{ toLower(github.repository_owner) }}/task-frontend:latest
