@@ -1,47 +1,21 @@
-name: Security Scanning
+name: CodeQL Security Scan
 
 on:
+  push:
+    branches: [main, develop]
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
 
 jobs:
-  trivy-scan:
+  analyze:
+    name: Analyze Code with CodeQL
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Build image for scanning
-        run: docker build -t task-backend-scan backend/
-
-      - name: Trivy image scan (action)
-        uses: aquasecurity/trivy-action@master
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
-          image-ref: task-backend-scan
-          format: table
-          exit-code: '1'    # fail job on vulnerabilities; remove/change if you want warnings only
-
-  dependency-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Backend npm audit
-        run: |
-          cd backend
-          npm ci
-          npm audit --audit-level=moderate || true  # do not fail if you want warnings; remove "|| true" to make it fail
-
-      - name: Frontend npm audit
-        run: |
-          cd frontend
-          npm ci
-          npm audit --audit-level=moderate || true
+          languages: javascript
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
