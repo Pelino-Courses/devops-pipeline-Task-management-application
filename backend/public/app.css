@@ -1,0 +1,79 @@
+:root{
+    --bg:#0f1720;
+    --panel:#0b1220;
+    --muted:#93a1b0;
+    --accent:#1f6feb;
+    --card:#0e1720;
+}
+
+*{
+    box-sizing:border-box;
+    font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
+}
+
+body{
+    margin:0;
+    background:var(--bg);
+    color:#e6eef8;
+}
+
+/* NAVBAR */
+.nav{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 20px;
+    background:#071018;
+    border-bottom:1px solid #102028;
+}
+.brand{font-weight:700;color:var(--accent);text-decoration:none;margin-right:14px}
+.nav-link{color:#cfe3ff;margin-right:10px;text-decoration:none}
+.nav-right{display:flex;gap:10px}
+
+/* MAIN CONTAINER */
+.container{
+    max-width:900px;
+    margin:25px auto;
+    padding:20px;
+    background:var(--panel);
+    border-radius:12px;
+}
+
+/* CARD STYLES */
+.card{
+    background:var(--card);
+    padding:15px;
+    border-radius:10px;
+    border:1px solid #142432;
+    min-width:260px;
+}
+
+/* FORM ELEMENTS */
+input,textarea,select{
+    width:100%;
+    padding:10px;
+    margin:8px 0;
+    background:#071323;
+    border:1px solid #123;
+    border-radius:8px;
+    color:#e6eef8;
+}
+
+button{
+    padding:8px 12px;
+    background:var(--accent);
+    border:none;
+    border-radius:8px;
+    color:white;
+    cursor:pointer;
+}
+
+.row{
+    display:flex;
+    gap:10px;
+}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+    .row{flex-direction:column;}
+}
