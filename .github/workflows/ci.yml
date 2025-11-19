@@ -6,47 +6,27 @@ on:
 
 jobs:
   backend-tests:
-    name: Backend Build & Test
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
+      - uses: actions/checkout@v4
+      - name: Setup Node
         uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install Dependencies
+        with: node-version: '18'
+      - name: Backend install & test
         run: |
           cd backend
           npm ci
-
-      - name: Run Backend Tests
-        run: |
-          cd backend
           npm test
 
   frontend-tests:
-    name: Frontend Build & Test
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
+      - uses: actions/checkout@v4
+      - name: Setup Node
         uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install Dependencies
+        with: node-version: '18'
+      - name: Frontend install & test
         run: |
           cd frontend
           npm ci
-
-      - name: Run Frontend Tests
-        run: |
-          cd frontend
           npm test
