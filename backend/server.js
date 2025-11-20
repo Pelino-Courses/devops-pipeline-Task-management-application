@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 require('./db');
 
+const RateLimit = require('express-rate-limit');
 const authRouter = require('./routes/auth');
 const tasksRouter = require('./routes/tasks');
 
@@ -11,6 +12,14 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Set up rate limiter: max 100 requests per 15 minutes per IP
+const limiter = RateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+});
+
+app.use(limiter); // apply rate limiting middleware globally, including JWT middleware
 
 app.use('/api/auth', authRouter);
 
