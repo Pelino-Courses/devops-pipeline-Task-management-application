@@ -12,6 +12,7 @@ import Login from '@/pages/auth/Login'
 import Register from '@/pages/auth/Register'
 import Dashboard from '@/pages/Dashboard'
 import Tasks from '@/pages/Tasks'
+import Calendar from '@/pages/Calendar'
 import Profile from '@/pages/Profile'
 import AdminDashboard from '@/pages/admin/Dashboard'
 import AdminUsers from '@/pages/admin/Users'
@@ -87,6 +88,14 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <Tasks />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/calendar"
+                    element={
+                        <ProtectedRoute>
+                            <Calendar />
                         </ProtectedRoute>
                     }
                 />
