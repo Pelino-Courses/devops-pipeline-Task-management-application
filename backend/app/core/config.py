@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from typing import List, Optional
 from functools import lru_cache
 
@@ -33,6 +34,7 @@ class Settings(BaseSettings):
     ALLOWED_EXTENSIONS: List[str] = ["pdf", "png", "jpg", "jpeg", "gif"]
     UPLOAD_DIR: str = "uploads"
     
+    @field_validator('CORS_ORIGINS', mode='before')
     @classmethod
     def parse_cors_origins(cls, v):
         """Parse CORS_ORIGINS from string or list"""
@@ -40,21 +42,13 @@ class Settings(BaseSettings):
             return [i.strip() for i in v.split(',')]
         return v
     
+    @field_validator('ALLOWED_EXTENSIONS', mode='before')
     @classmethod
     def parse_allowed_extensions(cls, v):
         """Parse ALLOWED_EXTENSIONS from string or list"""
         if isinstance(v, str):
             return [i.strip() for i in v.split(',')]
         return v
-    
-    def __init__(self, **kwargs):
-        # Handle CORS_ORIGINS
-        if 'CORS_ORIGINS' in kwargs and isinstance(kwargs['CORS_ORIGINS'], str):
-            kwargs['CORS_ORIGINS'] = self.parse_cors_origins(kwargs['CORS_ORIGINS'])
-        # Handle ALLOWED_EXTENSIONS
-        if 'ALLOWED_EXTENSIONS' in kwargs and isinstance(kwargs['ALLOWED_EXTENSIONS'], str):
-            kwargs['ALLOWED_EXTENSIONS'] = self.parse_allowed_extensions(kwargs['ALLOWED_EXTENSIONS'])
-        super().__init__(**kwargs)
     
     # Email (Optional)
     SMTP_HOST: Optional[str] = None
