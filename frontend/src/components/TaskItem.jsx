@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { CheckCircle, Circle, Clock, AlertCircle, Edit2, Trash2, Calendar } from 'lucide-react'
+import { CheckCircle, Circle, Clock, AlertCircle, Edit2, Trash2, Calendar, Share2 } from 'lucide-react'
 import { taskService } from '@/services'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 
-const TaskItem = ({ task, onEdit, onDelete, onUpdate }) => {
+const TaskItem = ({ task, onEdit, onDelete, onUpdate, onShare }) => {
     const [updating, setUpdating] = useState(false)
 
     const getPriorityColor = (priority) => {
@@ -101,16 +101,30 @@ const TaskItem = ({ task, onEdit, onDelete, onUpdate }) => {
                         )}
 
                         <span className={`px-2 py-1 rounded text-xs ${task.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
-                                task.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400' :
-                                    'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400'
+                            task.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400' :
+                                'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400'
                             }`}>
                             {task.status === 'in_progress' ? 'In Progress' : task.status === 'completed' ? 'Completed' : 'To Do'}
                         </span>
+
+                        {/* Shared Indicator */}
+                        {task.shared_with && task.shared_with.length > 0 && (
+                            <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 px-2 py-1 rounded">
+                                Shared
+                            </span>
+                        )}
                     </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => onShare(task)}
+                        className="p-2 hover:bg-light-border dark:hover:bg-dark-border rounded-lg transition-colors"
+                        title="Share task"
+                    >
+                        <Share2 className="h-4 w-4" />
+                    </button>
                     <button
                         onClick={() => onEdit(task)}
                         className="p-2 hover:bg-light-border dark:hover:bg-dark-border rounded-lg transition-colors"

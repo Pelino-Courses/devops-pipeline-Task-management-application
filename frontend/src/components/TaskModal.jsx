@@ -38,7 +38,7 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
         setLoading(true)
 
         try {
-            if (task) {
+            if (task?.id) {
                 await taskService.updateTask(task.id, formData)
                 toast.success('Task updated successfully')
             } else {
@@ -62,7 +62,7 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-light-border dark:border-dark-border">
                     <h2 className="text-2xl font-bold">
-                        {task ? 'Edit Task' : 'Create New Task'}
+                        {task?.id ? 'Edit Task' : 'Create New Task'}
                     </h2>
                     <button
                         onClick={onClose}
@@ -165,7 +165,7 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
                             className="btn btn-primary flex-1"
                             disabled={loading}
                         >
-                            {loading ? 'Saving...' : (task ? 'Update Task' : 'Create Task')}
+                            {loading ? 'Saving...' : (task?.id ? 'Update Task' : 'Create Task')}
                         </button>
                     </div>
                 </form>

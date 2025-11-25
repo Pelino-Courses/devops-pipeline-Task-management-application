@@ -1,8 +1,18 @@
-from sqlalchemy import Boolean, Column, Integer, String, DateTime, Text, Enum as SQLEnum, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, Text, Enum as SQLEnum, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 import enum
+
+
+# Association table for shared tasks
+task_shares = Table(
+    'task_shares',
+    Base.metadata,
+    Column('task_id', Integer, ForeignKey('tasks.id', ondelete="CASCADE"), primary_key=True),
+    Column('user_id', Integer, ForeignKey('users.id', ondelete="CASCADE"), primary_key=True),
+    Column('created_at', DateTime(timezone=True), server_default=func.now())
+)
 
 
 class TaskPriority(str, enum.Enum):
@@ -50,6 +60,13 @@ class Task(Base):
     # Relationships
     owner = relationship("User", back_populates="tasks")
     attachments = relationship("Attachment", back_populates="task", cascade="all, delete-orphan")
+    
+    # Shared with users
+    shared_with = relationship(
+        "User",
+        secondary=task_shares,
+        back_populates="shared_tasks"
+    )
     
     def __repr__(self):
         return f"<Task {self.title}>"

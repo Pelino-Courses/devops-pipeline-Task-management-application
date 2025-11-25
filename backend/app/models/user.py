@@ -39,5 +39,12 @@ class User(Base):
     activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
     security_events = relationship("SecurityEvent", back_populates="user", cascade="all, delete-orphan")
     
+    # Shared tasks
+    shared_tasks = relationship(
+        "Task",
+        secondary="task_shares",
+        back_populates="shared_with"
+    )
+    
     def __repr__(self):
         return f"<User {self.username}>"

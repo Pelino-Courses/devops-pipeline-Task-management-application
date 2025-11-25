@@ -3,12 +3,14 @@ import { Plus, Search, Filter, Loader2 } from 'lucide-react'
 import { taskService } from '@/services'
 import TaskModal from '@/components/TaskModal'
 import TaskItem from '@/components/TaskItem'
+import ShareTaskModal from '@/components/ShareTaskModal'
 import toast from 'react-hot-toast'
 
 const Tasks = () => {
     const [tasks, setTasks] = useState([])
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false)
     const [selectedTask, setSelectedTask] = useState(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [filterStatus, setFilterStatus] = useState('all')
@@ -47,8 +49,14 @@ const Tasks = () => {
         setIsModalOpen(true)
     }
 
+    const handleShareTask = (task) => {
+        setSelectedTask(task)
+        setIsShareModalOpen(true)
+    }
+
     const handleCloseModal = () => {
         setIsModalOpen(false)
+        setIsShareModalOpen(false)
         setSelectedTask(null)
     }
 
@@ -147,6 +155,7 @@ const Tasks = () => {
                             onEdit={handleEditTask}
                             onDelete={handleSuccess}
                             onUpdate={handleSuccess}
+                            onShare={handleShareTask}
                         />
                     ))}
                 </div>
@@ -171,9 +180,15 @@ const Tasks = () => {
                 task={selectedTask}
                 onSuccess={handleSuccess}
             />
+
+            {/* Share Task Modal */}
+            <ShareTaskModal
+                isOpen={isShareModalOpen}
+                onClose={handleCloseModal}
+                task={selectedTask}
+            />
         </div>
     )
 }
 
 export default Tasks
-

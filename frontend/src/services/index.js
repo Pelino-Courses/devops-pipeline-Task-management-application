@@ -77,6 +77,12 @@ export const taskService = {
         return response.data
     },
 
+    // Share task
+    shareTask: async (taskId, email) => {
+        const response = await api.post(`/tasks/${taskId}/share`, { email })
+        return response.data
+    },
+
     // Delete task
     deleteTask: async (taskId) => {
         const response = await api.delete(`/tasks/${taskId}`)

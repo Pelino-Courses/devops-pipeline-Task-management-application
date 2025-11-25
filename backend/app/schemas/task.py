@@ -4,6 +4,17 @@ from datetime import datetime
 from app.models.task import TaskPriority, TaskStatus
 
 
+# Simple user schema for task owner/shared users
+class UserSimple(BaseModel):
+    """Simplified user schema for task responses."""
+    id: int
+    username: str
+    full_name: Optional[str]
+    
+    class Config:
+        from_attributes = True
+
+
 # Base schemas
 class TaskBase(BaseModel):
     """Base task schema."""
@@ -39,6 +50,11 @@ class TaskStatusUpdate(BaseModel):
     status: TaskStatus
 
 
+class TaskShare(BaseModel):
+    """Schema for sharing a task."""
+    email: str
+
+
 # Response schemas
 class Task(TaskBase):
     """Schema for task response."""
@@ -48,6 +64,7 @@ class Task(TaskBase):
     updated_at: Optional[datetime]
     completed_at: Optional[datetime]
     owner_id: int
+    shared_with: List[UserSimple] = []
     
     class Config:
         from_attributes = True
@@ -55,7 +72,7 @@ class Task(TaskBase):
 
 class TaskWithOwner(Task):
     """Schema for task with owner information."""
-    owner: "UserSimple"
+    owner: UserSimple
 
 
 class TaskList(BaseModel):
@@ -65,17 +82,6 @@ class TaskList(BaseModel):
     page: int
     page_size: int
     total_pages: int
-
-
-# Simple user schema for task owner
-class UserSimple(BaseModel):
-    """Simplified user schema for task responses."""
-    id: int
-    username: str
-    full_name: Optional[str]
-    
-    class Config:
-        from_attributes = True
 
 
 # Update forward references

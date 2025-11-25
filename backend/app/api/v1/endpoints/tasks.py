@@ -50,14 +50,19 @@ async def get_tasks(
     search: Optional[str] = None,
 ):
     """
-    Get paginated list of tasks for the current user.
+    Get paginated list of tasks for the current user (owned + shared).
     Admins can see all tasks.
     """
     query = db.query(Task)
     
-    # Filter by owner unless admin
+    # Filter by owner or shared unless admin
     if current_user.role != "admin":
-        query = query.filter(Task.owner_id == current_user.id)
+        query = query.filter(
+            or_(
+                Task.owner_id == current_user.id,
+                Task.shared_with.any(id=current_user.id)
+            )
+        )
     
     # Apply filters
     if status:
@@ -142,8 +147,11 @@ async def get_task(
             detail="Task not found"
         )
     
-    # Check permissions
-    if not check_user_permissions(current_user, task.owner_id):
+    # Check permissions (owner or shared)
+    is_owner = task.owner_id == current_user.id
+    is_shared = any(u.id == current_user.id for u in task.shared_with)
+    
+    if not (is_owner or is_shared or current_user.role == "admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
@@ -170,11 +178,11 @@ async def update_task(
             detail="Task not found"
         )
     
-    # Check permissions
-    if not check_user_permissions(current_user, task.owner_id):
-        raise HTTPException(
+    # Check permissions (only owner can update details, shared users might only update status - for now let's restrict to owner)
+    if task.owner_id != current_user.id and current_user.role != "admin":
+         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
+            detail="Only the owner can update task details"
         )
     
     # Store old values for logging
@@ -227,7 +235,7 @@ async def update_task_status(
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Update only the task status.
+    Update only the task status. Shared users can also do this.
     """
     task = db.query(Task).filter(Task.id == task_id).first()
     
@@ -237,8 +245,11 @@ async def update_task_status(
             detail="Task not found"
         )
     
-    # Check permissions
-    if not check_user_permissions(current_user, task.owner_id):
+    # Check permissions (owner or shared)
+    is_owner = task.owner_id == current_user.id
+    is_shared = any(u.id == current_user.id for u in task.shared_with)
+    
+    if not (is_owner or is_shared or current_user.role == "admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
@@ -270,6 +281,69 @@ async def update_task_status(
     return task
 
 
+@router.post("/{task_id}/share", response_model=schemas.Task)
+async def share_task(
+    task_id: int,
+    share_data: schemas.TaskShare,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Share a task with another user by email.
+    """
+    task = db.query(Task).filter(Task.id == task_id).first()
+    
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found"
+        )
+    
+    # Only owner can share
+    if task.owner_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the owner can share the task"
+        )
+    
+    # Find user to share with
+    user_to_share = db.query(User).filter(User.email == share_data.email).first()
+    if not user_to_share:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User with this email not found"
+        )
+        
+    if user_to_share.id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot share task with yourself"
+        )
+    
+    # Check if already shared
+    if user_to_share in task.shared_with:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Task already shared with this user"
+        )
+    
+    task.shared_with.append(user_to_share)
+    db.commit()
+    db.refresh(task)
+    
+    # Log activity
+    log_activity(
+        db=db,
+        action="SHARE",
+        entity_type="Task",
+        entity_id=task.id,
+        user_id=current_user.id,
+        description=f"Shared task with {user_to_share.email}"
+    )
+    
+    return task
+
+
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(
     task_id: int,
@@ -287,11 +361,11 @@ async def delete_task(
             detail="Task not found"
         )
     
-    # Check permissions
-    if not check_user_permissions(current_user, task.owner_id):
+    # Only owner can delete
+    if task.owner_id != current_user.id and current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
+            detail="Only the owner can delete the task"
         )
     
     task_title = task.title
