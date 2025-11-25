@@ -42,7 +42,7 @@ class SecurityEvent(Base):
     description = Column(Text, nullable=True)
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)
-    metadata = Column(JSON, nullable=True)  # Additional event data
+    event_metadata = Column(JSON, nullable=True)  # Additional event data
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
