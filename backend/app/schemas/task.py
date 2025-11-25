@@ -19,7 +19,7 @@ class TaskBase(BaseModel):
 # Request schemas
 class TaskCreate(TaskBase):
     """Schema for task creation."""
-    pass
+    status: Optional[TaskStatus] = TaskStatus.TODO
 
 
 class TaskUpdate(BaseModel):
