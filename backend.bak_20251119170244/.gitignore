@@ -1,7 +1,0 @@
-node_modules/
-data.sqlite
-.env
-.DS_Store
-.idea/
-.vscode/
-npm-debug.log
