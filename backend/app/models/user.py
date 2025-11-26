@@ -46,5 +46,8 @@ class User(Base):
         back_populates="shared_with"
     )
     
+    # Team memberships
+    team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
+    
     def __repr__(self):
         return f"<User {self.username}>"

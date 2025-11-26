@@ -1,7 +1,7 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import {
     LayoutDashboard, CheckSquare, Calendar, Settings,
-    LogOut, User, Shield, FileText, Bell, Menu, X
+    LogOut, User, Shield, FileText, Bell, Menu, X, Users
 } from 'lucide-react'
 import { useState } from 'react'
 import useAuthStore from '@/store/authStore'
@@ -23,6 +23,7 @@ const MainLayout = () => {
     const navItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { name: 'Tasks', path: '/tasks', icon: CheckSquare },
+        { name: 'Teams', path: '/teams', icon: Users },
         { name: 'Calendar', path: '/calendar', icon: Calendar },
         { name: 'Profile', path: '/profile', icon: User },
     ]
@@ -89,8 +90,8 @@ const MainLayout = () => {
                                             key={item.path}
                                             to={item.path}
                                             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive
-                                                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                                                    : 'hover:bg-gray-100 dark:hover:bg-slate-700'
+                                                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                                                : 'hover:bg-gray-100 dark:hover:bg-slate-700'
                                                 }`}
                                         >
                                             <Icon className="h-5 w-5" />
@@ -116,8 +117,8 @@ const MainLayout = () => {
                                                 key={item.path}
                                                 to={item.path}
                                                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive
-                                                        ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                                                        : 'hover:bg-gray-100 dark:hover:bg-slate-700'
+                                                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                                                    : 'hover:bg-gray-100 dark:hover:bg-slate-700'
                                                     }`}
                                             >
                                                 <Icon className="h-5 w-5" />

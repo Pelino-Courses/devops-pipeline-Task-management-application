@@ -38,17 +38,21 @@ class Settings(BaseSettings):
     @classmethod
     def parse_cors_origins(cls, v):
         """Parse CORS_ORIGINS from string or list"""
-        if isinstance(v, str):
+        if isinstance(v, str) and v:
             return [i.strip() for i in v.split(',')]
-        return v
+        elif isinstance(v, list):
+            return v
+        return ["http://localhost:5173", "http://localhost:3000"]
     
     @field_validator('ALLOWED_EXTENSIONS', mode='before')
     @classmethod
     def parse_allowed_extensions(cls, v):
         """Parse ALLOWED_EXTENSIONS from string or list"""
-        if isinstance(v, str):
+        if isinstance(v, str) and v:
             return [i.strip() for i in v.split(',')]
-        return v
+        elif isinstance(v, list):
+            return v
+        return ["pdf", "png", "jpg", "jpeg", "gif"]
     
     # Email (Optional)
     SMTP_HOST: Optional[str] = None

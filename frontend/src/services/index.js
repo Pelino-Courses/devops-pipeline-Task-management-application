@@ -90,6 +90,38 @@ export const taskService = {
     },
 }
 
+export const teamService = {
+    // Get my teams
+    getTeams: async () => {
+        const response = await api.get('/teams')
+        return response.data
+    },
+
+    // Create team
+    createTeam: async (teamData) => {
+        const response = await api.post('/teams', teamData)
+        return response.data
+    },
+
+    // Get team details
+    getTeam: async (teamId) => {
+        const response = await api.get(`/teams/${teamId}`)
+        return response.data
+    },
+
+    // Add member
+    addMember: async (teamId, email, role = 'member') => {
+        const response = await api.post(`/teams/${teamId}/members`, { email, role })
+        return response.data
+    },
+
+    // Remove member
+    removeMember: async (teamId, userId) => {
+        const response = await api.delete(`/teams/${teamId}/members/${userId}`)
+        return response.data
+    }
+}
+
 export const adminService = {
     // Get dashboard statistics
     getDashboardStats: async () => {
@@ -132,5 +164,6 @@ export default {
     auth: authService,
     user: userService,
     task: taskService,
+    team: teamService,
     admin: adminService,
 }
