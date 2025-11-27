@@ -1,5 +1,4 @@
-from pydantic_settings import BaseSettings
-from pydantic import field_validator
+from pydantic import BaseSettings, validator
 from typing import List, Optional
 from functools import lru_cache
 
@@ -34,7 +33,7 @@ class Settings(BaseSettings):
     ALLOWED_EXTENSIONS: List[str] = ["pdf", "png", "jpg", "jpeg", "gif"]
     UPLOAD_DIR: str = "uploads"
     
-    @field_validator('CORS_ORIGINS', mode='before')
+    @validator('CORS_ORIGINS', pre=True)
     @classmethod
     def parse_cors_origins(cls, v):
         """Parse CORS_ORIGINS from string or list"""
@@ -44,7 +43,7 @@ class Settings(BaseSettings):
             return v
         return ["http://localhost:5173", "http://localhost:3000"]
     
-    @field_validator('ALLOWED_EXTENSIONS', mode='before')
+    @validator('ALLOWED_EXTENSIONS', pre=True)
     @classmethod
     def parse_allowed_extensions(cls, v):
         """Parse ALLOWED_EXTENSIONS from string or list"""
