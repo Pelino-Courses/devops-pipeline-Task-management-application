@@ -93,10 +93,11 @@ jobs:
         with:
           python-version: '3.11'
       
-      - name: Install dependencies
+      - name: Install test dependencies
         run: |
           cd backend
           pip install -r requirements.txt
+          pip install pytest-cov httpx
       
       - name: Run Tests
         env:
@@ -104,7 +105,8 @@ jobs:
           SECRET_KEY: test-secret-key-for-ci
         run: |
           cd backend
-          pytest tests/ -v --cov=app --cov-report=xml --cov-report=html || true
+          pytest tests/ -v --cov=app --cov-report=xml --cov-report=html --maxfail=3
+        continue-on-error: false
       
       - name: Upload Coverage
         uses: actions/upload-artifact@v4

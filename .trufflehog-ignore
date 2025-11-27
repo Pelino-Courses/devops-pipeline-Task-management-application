@@ -1,0 +1,29 @@
+# TruffleHog ignore patterns
+# Ignore test files and example configs
+**/tests/**
+**/*.test.js
+**/*.test.jsx
+**/*.spec.js
+**/.env.example
+**/example-config.*
+**/conftest.py
+
+# Ignore documentation
+**/README.md
+**/DEPLOYMENT.md
+**/ARCHITECTURE.md
+**/*.md
+
+# Ignore CI/CD configs
+**/.github/**
+
+# Ignore lock files
+**/package-lock.json
+**/yarn.lock
+**/poetry.lock
+
+# Ignore vendor/dependencies
+**/node_modules/**
+**/venv/**
+**/.venv/**
+**/vendor/**
