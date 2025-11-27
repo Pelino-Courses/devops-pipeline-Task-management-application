@@ -57,7 +57,7 @@ const Dashboard = () => {
                     Welcome back, {user?.username || 'User'}! 👋
                 </h1>
                 <p className="text-light-muted dark:text-dark-muted mt-1">
-                    Here's what's happening with your tasks today.
+                    Here&apos;s what&apos;s happening with your tasks today.
                 </p>
             </div>
 
@@ -119,13 +119,13 @@ const Dashboard = () => {
                             <div key={task.id} className="flex items-center justify-between p-3 bg-light-bg dark:bg-dark-bg rounded-lg border border-light-border dark:border-dark-border">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-2 h-2 rounded-full ${task.priority === 'high' ? 'bg-red-500' :
-                                            task.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                                        task.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
                                         }`} />
                                     <span className="font-medium">{task.title}</span>
                                 </div>
                                 <span className={`text-xs px-2 py-1 rounded ${task.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
-                                        task.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                                            'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300'
+                                    task.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                                        'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300'
                                     }`}>
                                     {task.status.replace('_', ' ')}
                                 </span>

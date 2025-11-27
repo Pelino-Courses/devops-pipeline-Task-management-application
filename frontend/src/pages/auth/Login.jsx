@@ -39,7 +39,7 @@ const Login = () => {
             const mockRefreshToken = `mock_refresh_${Date.now()}`
 
             // Set user in store (without password)
-            const { password, ...userWithoutPassword } = user
+            const { password: _password, ...userWithoutPassword } = user
             setAuth(userWithoutPassword, mockAccessToken, mockRefreshToken)
 
             toast.success('Login successful!')
@@ -158,7 +158,7 @@ const Login = () => {
 
             <div className="mt-6 text-center">
                 <p className="text-sm text-light-muted dark:text-dark-muted">
-                    Don't have an account?{' '}
+                    Don&apos;t have an account?{' '}
                     <Link to="/register" className="link font-medium">
                         Sign up
                     </Link>

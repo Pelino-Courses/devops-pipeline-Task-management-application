@@ -3,7 +3,7 @@ import useThemeStore from '@/store/themeStore'
 import { useState, useRef, useEffect } from 'react'
 
 const ThemeToggle = () => {
-    const { theme, actualTheme, setTheme, setActualTheme } = useThemeStore()
+    const { theme, setTheme, setActualTheme } = useThemeStore()
     const [isOpen, setIsOpen] = useState(false)
     const dropdownRef = useRef(null)
 

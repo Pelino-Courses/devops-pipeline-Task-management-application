@@ -37,7 +37,7 @@ const Tasks = () => {
 
     useEffect(() => {
         fetchTasks()
-    }, [searchQuery, filterStatus, filterPriority])
+    }, [searchQuery, filterStatus, filterPriority, fetchTasks])
 
     const handleCreateTask = () => {
         setSelectedTask(null)

@@ -46,7 +46,7 @@ const ShareTaskModal = ({ isOpen, onClose, task }) => {
                 {/* Content */}
                 <div className="p-6">
                     <p className="text-sm text-light-muted dark:text-dark-muted mb-4">
-                        Share <span className="font-semibold text-foreground">"{task.title}"</span> with another user by entering their email address.
+                        Share <span className="font-semibold text-foreground">&quot;{task.title}&quot;</span> with another user by entering their email address.
                     </p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">

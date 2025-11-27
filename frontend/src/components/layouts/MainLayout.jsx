@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import {
-    LayoutDashboard, CheckSquare, Calendar, Settings,
+    LayoutDashboard, CheckSquare, Calendar,
     LogOut, User, Shield, FileText, Bell, Menu, X, Users
 } from 'lucide-react'
 import { useState } from 'react'
