@@ -68,7 +68,7 @@ coverage/
 .nyc_output
 
 # Docker
-.dockerignore
+
 
 # Terraform
 *.tfstate
