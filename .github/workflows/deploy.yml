@@ -1,0 +1,344 @@
+name: Complete Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  TF_VERSION: '1.6.0'
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  # Step 1: Run CI Tests
+  ci-tests:
+    name: CI - Tests & Build
+    uses: ./.github/workflows/ci.yml
+  
+  # Step 2: Security Scanning
+  security-scan:
+    name: Security - Comprehensive Scan
+    uses: ./.github/workflows/security.yml
+    needs: ci-tests
+  
+  # Step 3: Build and Push Docker Images
+  docker-build-push:
+    name: Docker - Build & Push
+    runs-on: ubuntu-latest
+    needs: [ci-tests, security-scan]
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/taskmanager-backend:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/taskmanager-backend:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/taskmanager-backend:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/taskmanager-backend:buildcache,mode=max
+      
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          target: production
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/taskmanager-frontend:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/taskmanager-frontend:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/taskmanager-frontend:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/taskmanager-frontend:buildcache,mode=max
+  
+  # Step 4: Provision Infrastructure with Terraform
+  terraform-provision:
+    name: Terraform - Provision Infrastructure
+    runs-on: ubuntu-latest
+    needs: docker-build-push
+    environment:
+      name: production
+    outputs:
+      vm_ip: ${{ steps.terraform-output.outputs.vm_ip }}
+      vm_user: ${{ steps.terraform-output.outputs.vm_user }}
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+      
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./infrastructure/terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      
+      - name: Create terraform.tfvars
+        run: |
+          cat > terraform.auto.tfvars <<EOF
+          ssh_public_key = "${{ secrets.SSH_PUBLIC_KEY }}"
+          db_admin_password = "${{ secrets.DB_ADMIN_PASSWORD }}"
+          app_secret_key = "${{ secrets.APP_SECRET_KEY }}"
+          docker_hub_username = "${{ secrets.DOCKER_HUB_USERNAME }}"
+          docker_hub_token = "${{ secrets.DOCKER_HUB_TOKEN }}"
+          EOF
+        working-directory: ./infrastructure/terraform
+      
+      - name: Terraform Plan
+        run: terraform plan -var-file="terraform.dev.tfvars.example" -out=tfplan
+        working-directory: ./infrastructure/terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+        working-directory: ./infrastructure/terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      
+      - name: Get Terraform Outputs
+        id: terraform-output
+        run: |
+          echo "vm_ip=$(terraform output -raw vm_public_ip)" >> $GITHUB_OUTPUT
+          echo "vm_user=$(terraform output -raw vm_admin_username)" >> $GITHUB_OUTPUT
+          terraform output -json > terraform-outputs.json
+        working-directory: ./infrastructure/terraform
+      
+      - name: Upload Terraform Outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-outputs
+          path: infrastructure/terraform/terraform-outputs.json
+          retention-days: 30
+  
+  # Step 5: Deploy Application with Ansible
+  ansible-deploy:
+    name: Ansible - Deploy Application
+    runs-on: ubuntu-latest
+    needs: terraform-provision
+    environment:
+      name: production
+      url: http://${{ needs.terraform-provision.outputs.vm_ip }}
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Ansible
+        run: |
+          pip install ansible
+          ansible --version
+      
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ needs.terraform-provision.outputs.vm_ip }} >> ~/.ssh/known_hosts
+      
+      - name: Create Ansible Inventory
+        run: |
+          mkdir -p infrastructure/ansible
+          cat > infrastructure/ansible/inventory.ini <<EOF
+          [taskmanager]
+          production ansible_host=${{ needs.terraform-provision.outputs.vm_ip }} ansible_user=${{ needs.terraform-provision.outputs.vm_user }}
+          EOF
+      
+      - name: Create Ansible Playbook
+        run: |
+          cat > infrastructure/ansible/deploy.yml <<'EOF'
+          ---
+          - name: Deploy Task Manager Application
+            hosts: taskmanager
+            become: yes
+            vars:
+              app_dir: /opt/taskmanager
+              docker_hub_username: ${{ secrets.DOCKER_HUB_USERNAME }}
+              db_host: "{{ lookup('env', 'DB_HOST') }}"
+              db_password: "${{ secrets.DB_ADMIN_PASSWORD }}"
+              app_secret: "${{ secrets.APP_SECRET_KEY }}"
+            
+            tasks:
+              - name: Update apt cache
+                apt:
+                  update_cache: yes
+                  cache_valid_time: 3600
+              
+              - name: Ensure application directory exists
+                file:
+                  path: "{{ app_dir }}"
+                  state: directory
+                  owner: azureuser
+                  group: azureuser
+                  mode: '0755'
+              
+              - name: Clone repository
+                git:
+                  repo: 'https://github.com/Pelino-Courses/devops-pipeline-Task-management-application.git'
+                  dest: "{{ app_dir }}"
+                  version: main
+                  force: yes
+                become_user: azureuser
+              
+              - name: Login to Docker Hub
+                shell: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+                no_log: true
+              
+              - name: Create .env file
+                copy:
+                  dest: "{{ app_dir }}/.env"
+                  content: |
+                    # Database Configuration
+                    DATABASE_URL=postgresql://taskmanager_admin:{{ db_password }}@{{ db_host }}:5432/taskmanager_db
+                    POSTGRES_USER=taskmanager_admin
+                    POSTGRES_PASSWORD={{ db_password }}
+                    POSTGRES_DB=taskmanager_db
+                    
+                    # Application Configuration
+                    SECRET_KEY={{ app_secret }}
+                    ALGORITHM=HS256
+                    ACCESS_TOKEN_EXPIRE_MINUTES=30
+                    ENVIRONMENT=production
+                    
+                    # CORS Configuration
+                    BACKEND_CORS_ORIGINS=["http://localhost:5173","http://${{ needs.terraform-provision.outputs.vm_ip }}:5173"]
+                    
+                    # Docker Images
+                    BACKEND_IMAGE={{ docker_hub_username }}/taskmanager-backend:latest
+                    FRONTEND_IMAGE={{ docker_hub_username }}/taskmanager-frontend:latest
+                  owner: azureuser
+                  group: azureuser
+                  mode: '0600'
+              
+              - name: Pull latest Docker images
+                shell: |
+                  cd {{ app_dir }}
+                  docker-compose pull
+                become_user: azureuser
+              
+              - name: Stop existing containers
+                shell: |
+                  cd {{ app_dir }}
+                  docker-compose down || true
+                become_user: azureuser
+              
+              - name: Start application
+                shell: |
+                  cd {{ app_dir }}
+                  docker-compose up -d
+                become_user: azureuser
+              
+              - name: Wait for services to be healthy
+                shell: |
+                  cd {{ app_dir }}
+                  timeout 120 bash -c 'until docker-compose ps | grep -q "healthy\\|Up"; do sleep 5; done'
+                become_user: azureuser
+                ignore_errors: yes
+              
+              - name: Check application status
+                shell: |
+                  cd {{ app_dir }}
+                  docker-compose ps
+                become_user: azureuser
+                register: docker_status
+              
+              - name: Display deployment status
+                debug:
+                  var: docker_status.stdout_lines
+          EOF
+      
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook -i infrastructure/ansible/inventory.ini infrastructure/ansible/deploy.yml
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
+          DB_HOST: ${{ secrets.DB_HOST }}
+      
+      - name: Verify Deployment
+        run: |
+          echo "Waiting for application to be ready..."
+          sleep 30
+          curl -f http://${{ needs.terraform-provision.outputs.vm_ip }}:8000/health || exit 1
+          echo "✅ Backend is healthy!"
+      
+      - name: Create Deployment Summary
+        run: |
+          echo "## 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Deployment Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **VM IP**: \`${{ needs.terraform-provision.outputs.vm_ip }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend**: http://${{ needs.terraform-provision.outputs.vm_ip }}:5173" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend API**: http://${{ needs.terraform-provision.outputs.vm_ip }}:8000" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Docs**: http://${{ needs.terraform-provision.outputs.vm_ip }}:8000/api/v1/docs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔧 Management" >> $GITHUB_STEP_SUMMARY
+          echo "- **SSH**: \`ssh ${{ needs.terraform-provision.outputs.vm_user }}@${{ needs.terraform-provision.outputs.vm_ip }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Logs**: \`docker-compose logs -f\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: \`docker-compose ps\`" >> $GITHUB_STEP_SUMMARY
+  
+  # Step 6: Post-Deployment Tests
+  post-deployment-tests:
+    name: Post-Deployment - Smoke Tests
+    runs-on: ubuntu-latest
+    needs: ansible-deploy
+    
+    steps:
+      - name: Test Backend Health
+        run: |
+          response=$(curl -s http://${{ needs.terraform-provision.outputs.vm_ip }}:8000/health)
+          echo "Health check response: $response"
+          echo "$response" | jq -e '.status == "healthy"'
+      
+      - name: Test Frontend
+        run: |
+          curl -f http://${{ needs.terraform-provision.outputs.vm_ip }}:5173 || exit 1
+          echo "✅ Frontend is accessible!"
+      
+      - name: Test API Documentation
+        run: |
+          curl -f http://${{ needs.terraform-provision.outputs.vm_ip }}:8000/api/v1/docs || exit 1
+          echo "✅ API documentation is accessible!"
+      
+      - name: Complete Summary
+        run: |
+          echo "## ✅ All Post-Deployment Tests Passed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The application is fully deployed and operational." >> $GITHUB_STEP_SUMMARY

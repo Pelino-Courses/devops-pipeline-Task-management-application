@@ -1,0 +1,32 @@
+# Development Environment Configuration
+
+environment = "dev"
+location    = "eastus"
+
+# Networking
+vnet_address_space = "10.0.0.0/16"
+app_subnet_prefix  = "10.0.1.0/24"
+db_subnet_prefix   = "10.0.2.0/24"
+allowed_ssh_cidr   = "*"  # Restrict to your IP in production
+
+# Virtual Machine
+vm_size           = "Standard_B2s"  # 2 vCPUs, 4 GB RAM
+vm_admin_username = "azureuser"
+
+# Database
+db_admin_username = "taskmanager_admin"
+db_name           = "taskmanager_db"
+db_storage_mb     = 32768  # 32 GB
+db_sku_name       = "B_Standard_B1ms"  # Burstable tier
+
+# Container Registry
+enable_acr = false  # Use Docker Hub for dev
+
+# Tags
+common_tags = {
+  Project     = "TaskManager"
+  Environment = "Development"
+  ManagedBy   = "Terraform"
+  CostCenter  = "Engineering"
+  Application = "task-management-app"
+}

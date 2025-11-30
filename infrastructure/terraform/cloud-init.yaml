@@ -1,0 +1,112 @@
+#cloud-config
+# Cloud-init configuration for Task Manager Application VM
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+  - software-properties-common
+  - git
+  - jq
+  - unzip
+  - python3-pip
+
+# Install Docker
+runcmd:
+  # Install Docker
+  - curl -fsSL https://get.docker.com -o get-docker.sh
+  - sh get-docker.sh
+  - usermod -aG docker azureuser
+  - systemctl enable docker
+  - systemctl start docker
+  
+  # Install Docker Compose
+  - curl -L "https://github.com/docker/compose/releases/download/v${docker_compose_version}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  
+  # Create application directory
+  - mkdir -p /opt/taskmanager
+  - chown azureuser:azureuser /opt/taskmanager
+  
+  # Create logs directory
+  - mkdir -p /var/log/taskmanager
+  - chown azureuser:azureuser /var/log/taskmanager
+  
+  # Install Azure CLI (for Key Vault access)
+  - curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+  
+  # Configure firewall
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - ufw allow 8000/tcp
+  - ufw allow 5173/tcp
+  - ufw --force enable
+
+write_files:
+  - path: /etc/systemd/system/taskmanager.service
+    content: |
+      [Unit]
+      Description=Task Manager Application
+      Requires=docker.service
+      After=docker.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      WorkingDirectory=/opt/taskmanager
+      ExecStart=/usr/local/bin/docker-compose up -d
+      ExecStop=/usr/local/bin/docker-compose down
+      User=azureuser
+
+      [Install]
+      WantedBy=multi-user.target
+    permissions: '0644'
+  
+  - path: /opt/taskmanager/README.md
+    content: |
+      # Task Manager Application Deployment
+      
+      This VM has been provisioned with:
+      - Docker and Docker Compose
+      - Azure CLI
+      - Git
+      
+      ## Deployment Steps
+      
+      1. Clone the repository:
+         ```bash
+         cd /opt/taskmanager
+         git clone https://github.com/Pelino-Courses/devops-pipeline-Task-management-application.git .
+         ```
+      
+      2. Create .env file with configuration
+      
+      3. Start the application:
+         ```bash
+         docker-compose up -d
+         ```
+      
+      4. Check status:
+         ```bash
+         docker-compose ps
+         ```
+      
+      ## Service Management
+      
+      The application is managed by systemd:
+      - Start: `sudo systemctl start taskmanager`
+      - Stop: `sudo systemctl stop taskmanager`
+      - Status: `sudo systemctl status taskmanager`
+      - Enable on boot: `sudo systemctl enable taskmanager`
+    permissions: '0644'
+
+power_state:
+  mode: reboot
+  timeout: 300
+  condition: true
