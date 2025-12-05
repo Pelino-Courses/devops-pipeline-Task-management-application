@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 const Calendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date())
     const [tasks, setTasks] = useState([])
+    const [loading, setLoading] = useState(false)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedDate, setSelectedDate] = useState(null)
     const [selectedTask, setSelectedTask] = useState(null)

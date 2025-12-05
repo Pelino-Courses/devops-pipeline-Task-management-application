@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, Filter, Loader2 } from 'lucide-react'
 import { taskService } from '@/services'
 import TaskModal from '@/components/TaskModal'
@@ -17,7 +17,7 @@ const Tasks = () => {
     const [filterPriority, setFilterPriority] = useState('all')
     const [showFilters, setShowFilters] = useState(false)
 
-    const fetchTasks = async () => {
+    const fetchTasks = useCallback(async () => {
         try {
             setLoading(true)
             const response = await taskService.getTasks({
@@ -33,11 +33,11 @@ const Tasks = () => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [searchQuery, filterStatus, filterPriority])
 
     useEffect(() => {
         fetchTasks()
-    }, [searchQuery, filterStatus, filterPriority, fetchTasks])
+    }, [fetchTasks])
 
     const handleCreateTask = () => {
         setSelectedTask(null)

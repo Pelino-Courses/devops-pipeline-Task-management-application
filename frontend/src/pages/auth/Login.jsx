@@ -39,7 +39,8 @@ const Login = () => {
             const mockRefreshToken = `mock_refresh_${Date.now()}`
 
             // Set user in store (without password)
-            const { password: _password, ...userWithoutPassword } = user
+            // eslint-disable-next-line no-unused-vars
+            const { password, ...userWithoutPassword } = user
             setAuth(userWithoutPassword, mockAccessToken, mockRefreshToken)
 
             toast.success('Login successful!')
