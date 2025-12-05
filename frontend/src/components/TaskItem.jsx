@@ -9,6 +9,8 @@ const TaskItem = ({ task, onEdit, onDelete, onUpdate, onShare }) => {
 
     const getPriorityColor = (priority) => {
         switch (priority) {
+            case 'critical':
+                return 'text-purple-600 bg-purple-100 dark:bg-purple-900/20'
             case 'high':
                 return 'text-red-600 bg-red-100 dark:bg-red-900/20'
             case 'medium':
@@ -26,8 +28,38 @@ const TaskItem = ({ task, onEdit, onDelete, onUpdate, onShare }) => {
                 return <CheckCircle className="h-5 w-5 text-green-600" />
             case 'in_progress':
                 return <Clock className="h-5 w-5 text-blue-600" />
+            case 'review':
+                return <AlertCircle className="h-5 w-5 text-orange-600" />
+            case 'cancelled':
+                return <Circle className="h-5 w-5 text-red-600" />
             default:
                 return <Circle className="h-5 w-5 text-gray-400" />
+        }
+    }
+
+    const getStatusDisplay = (status) => {
+        const statusMap = {
+            'todo': 'To Do',
+            'in_progress': 'In Progress',
+            'review': 'Review',
+            'completed': 'Completed',
+            'cancelled': 'Cancelled'
+        }
+        return statusMap[status] || 'To Do'
+    }
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'completed':
+                return 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+            case 'in_progress':
+                return 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+            case 'review':
+                return 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'
+            case 'cancelled':
+                return 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+            default:
+                return 'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400'
         }
     }
 
@@ -100,12 +132,16 @@ const TaskItem = ({ task, onEdit, onDelete, onUpdate, onShare }) => {
                             </div>
                         )}
 
-                        <span className={`px-2 py-1 rounded text-xs ${task.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
-                            task.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400' :
-                                'bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400'
-                            }`}>
-                            {task.status === 'in_progress' ? 'In Progress' : task.status === 'completed' ? 'Completed' : 'To Do'}
+                        <span className={`px-2 py-1 rounded text-xs ${getStatusColor(task.status)}`}>
+                            {getStatusDisplay(task.status)}
                         </span>
+
+                        {/* Category Badge */}
+                        {task.category && (
+                            <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-1 rounded">
+                                {task.category}
+                            </span>
+                        )}
 
                         {/* Shared Indicator */}
                         {task.shared_with && task.shared_with.length > 0 && (

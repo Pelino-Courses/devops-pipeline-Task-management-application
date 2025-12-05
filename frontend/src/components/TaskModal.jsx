@@ -9,7 +9,10 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
         description: '',
         priority: 'medium',
         status: 'todo',
-        due_date: ''
+        category: '',
+        tags: '',
+        due_date: '',
+        reminder_date: ''
     })
     const [loading, setLoading] = useState(false)
 
@@ -20,7 +23,10 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
                 description: task.description || '',
                 priority: task.priority || 'medium',
                 status: task.status || 'todo',
-                due_date: task.due_date ? task.due_date.split('T')[0] : ''
+                category: task.category || '',
+                tags: task.tags || '',
+                due_date: task.due_date ? task.due_date.split('T')[0] : '',
+                reminder_date: task.reminder_date ? task.reminder_date.split('T')[0] : ''
             })
         } else {
             setFormData({
@@ -28,7 +34,10 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
                 description: '',
                 priority: 'medium',
                 status: 'todo',
-                due_date: ''
+                category: '',
+                tags: '',
+                due_date: '',
+                reminder_date: ''
             })
         }
     }, [task])
@@ -117,6 +126,7 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
                                 <option value="high">High</option>
+                                <option value="critical">Critical</option>
                             </select>
                         </div>
 
@@ -132,22 +142,68 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
                             >
                                 <option value="todo">To Do</option>
                                 <option value="in_progress">In Progress</option>
+                                <option value="review">Review</option>
                                 <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
                             </select>
                         </div>
                     </div>
 
-                    {/* Due Date */}
+                    {/* Category */}
                     <div>
                         <label className="block text-sm font-medium mb-2">
-                            Due Date
+                            Category
                         </label>
                         <input
-                            type="date"
-                            value={formData.due_date}
-                            onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                            type="text"
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                             className="input w-full"
+                            placeholder="e.g., Work, Personal, Shopping"
                         />
+                    </div>
+
+                    {/* Tags */}
+                    <div>
+                        <label className="block text-sm font-medium mb-2">
+                            Tags
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.tags}
+                            onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                            className="input w-full"
+                            placeholder="Comma-separated tags, e.g., urgent, meeting, development"
+                        />
+                    </div>
+
+                    {/* Dates */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Due Date */}
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Due Date
+                            </label>
+                            <input
+                                type="date"
+                                value={formData.due_date}
+                                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                                className="input w-full"
+                            />
+                        </div>
+
+                        {/* Reminder Date */}
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Reminder Date
+                            </label>
+                            <input
+                                type="date"
+                                value={formData.reminder_date}
+                                onChange={(e) => setFormData({ ...formData, reminder_date: e.target.value })}
+                                className="input w-full"
+                            />
+                        </div>
                     </div>
 
                     {/* Actions */}
